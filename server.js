@@ -65,7 +65,7 @@ function Location(search_query, formatted_query, latitude, longitude){
         res.send(weatherArray);
     }
     catch(error){
-        resp.status(500).send('something went wrong ')
+        res.status(500).send('something went wrong ')
 
     }
 
