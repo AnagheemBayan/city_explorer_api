@@ -11,13 +11,21 @@ app.use(cors());
 app.get('/location', getLocation);
 
 function getLocation(request, response){
+ try{
   let city = request.query.city;
   let locationData = require('./data/location.json');
   let getLocationObject = locationData[0];
   let locationObject = new Location(city,getLocationObject.display_name,getLocationObject.lat,getLocationObject.lon);
-  response.send(locationObject);
 
+  response.send(locationObject);
+ } catch(error){
+     response.status(500).send('something went wrong ')
+ }
+ 
 }
+
+
+
 
 function Location(search_query, formatted_query, latitude, longitude){
     this.search_query= search_query;
@@ -41,9 +49,12 @@ function Location(search_query, formatted_query, latitude, longitude){
     }
     
     function getWeather(req,res){
+        try{
+
         if(weatherArray){
             weatherArray=[];
         }
+        
         
         let weatherData = require('./data/ weather.json');
         let weather = weatherData.data;
@@ -53,7 +64,13 @@ function Location(search_query, formatted_query, latitude, longitude){
         });
         res.send(weatherArray);
     }
-    
+    catch(error){
+        resp.status(500).send('something went wrong ')
+
+    }
+
+    }
+  
     
     app.listen(PORT, ()=>{
       console.log(`app is listening on port ${PORT}`);
