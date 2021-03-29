@@ -19,6 +19,7 @@ let lon ;
 
 // start write the location server 
 function getLocation(request, response){
+ try{
   let city = request.query.city;
   let url = `https://us1.locationiq.com/v1/search.php?key=${locationKey}&q=${city}&format=json`;
   superAgent.get(url).then(res=>{
@@ -28,9 +29,18 @@ function getLocation(request, response){
    lon=data.lon;
    response.send(locationObject);
   });
+  response.send(locationObject);
+ } catch(error){
+     response.status(500).send('something went wrong ')
+ }
+ 
+
 }
 
-function Location(search_query, formatted_query, latitude, longitude){
+
+
+
+function LocationConstructor(search_query, formatted_query, latitude, longitude){
     this.search_query= search_query;
     this. formatted_query= formatted_query;
     this.latitude= latitude;
@@ -47,6 +57,7 @@ function Location(search_query, formatted_query, latitude, longitude){
     }
     
     function getWeather(req,res){
+
     try{
         weatherArray=[];
         let url=`http://api.weatherbit.io/v2.0/forecast/daily?lat=${lat}&lon=${lon}&key=${weatherKey}`
@@ -57,13 +68,12 @@ function Location(search_query, formatted_query, latitude, longitude){
         })
         res.send(weatherArray);
         });
-    
-        
-      }
-      catch(error){
-        res.status(500).send('something wrong');
-      }
-  }
+    catch(error){
+        res.status(500).send('something went wrong ')
+
+    }
+
+    }
 
   // start park function 
 
