@@ -6,20 +6,23 @@ const cors = require('cors');
 const app = express();
 app.use(cors());
 const superAgent= require('superagent');
-const { response } = require('express');
 const locationKey=process.env.location;
 const weatherKey=process.env.weather;
-const park=process.env.park;
+const park_Key=process.env.park;
 app.get('/location', getLocation);
 app.get('/weather',getWeather);
-app.get('/park',getPark);
+app.get('/parks',getPark);
+app.use('*',handleError);
 let lat ;
 let lon ;
+
+function handleError(req,res){
+  res.status(404).send('No server found ');
+}
 
 
 // start write the location server 
 function getLocation(request, response){
- try{
   let city = request.query.city;
   let url = `https://us1.locationiq.com/v1/search.php?key=${locationKey}&q=${city}&format=json`;
   superAgent.get(url).then(res=>{
@@ -29,18 +32,9 @@ function getLocation(request, response){
    lon=data.lon;
    response.send(locationObject);
   });
-  response.send(locationObject);
- } catch(error){
-     response.status(500).send('something went wrong ')
- }
- 
-
 }
 
-
-
-
-function LocationConstructor(search_query, formatted_query, latitude, longitude){
+function Location(search_query, formatted_query, latitude, longitude){
     this.search_query= search_query;
     this. formatted_query= formatted_query;
     this.latitude= latitude;
@@ -57,8 +51,6 @@ function LocationConstructor(search_query, formatted_query, latitude, longitude)
     }
     
     function getWeather(req,res){
-
-    try{
         weatherArray=[];
         let url=`http://api.weatherbit.io/v2.0/forecast/daily?lat=${lat}&lon=${lon}&key=${weatherKey}`
         superAgent.get(url).then(response=>{
@@ -67,12 +59,11 @@ function LocationConstructor(search_query, formatted_query, latitude, longitude)
           let newData = new weatherCnstructor(element.valid_date,element.weather.description);
         })
         res.send(weatherArray);
-        });
-    catch(error){
-        res.status(500).send('something went wrong ')
-
-    }
-
+        })
+      .catch((error)=>{
+        res.status(500).send('something wrong');
+ 
+     })
     }
 
   // start park function 
@@ -84,24 +75,34 @@ function LocationConstructor(search_query, formatted_query, latitude, longitude)
     this.des=des;
     this.fee=fee;
     this.address=address;
-    parkArr.push(this);
+    // parkArr.push(this);
 
    }
     function getPark(request,res){
-      let url=`https://developer.nps.gov/api/v1/parks?api_key=${park}`
+    
+        // parkArr=[];
+      let url=`https://developer.nps.gov/api/v1/parks?api_key=${park_Key}&q=${request.query.search_query}`
+      
       superAgent.get(url).then(response=>{
-        let dataPark=response.body.data;
-        dataPark.forEach(element =>{
-          let name= element.fullName;
-          let url=element.url;
-          let des=element.description;
-          let fee=element.entranceFees.cost;
-          let address= element.addresses[0].line1 + ','+ element.addresses[0].city + ','+ element.addresses[0].stateCode + ','+ element.addresses[0].postalCode;
-          let newPark = new Park(name,url,des,fee,address);
+        console.log(response);
+      const data= response.body.data.map(data=>{
+          let name= data.fullNam;
+          let url=data.url;
+          let des=data.description;
+          let fee=data.entranceFees[0].cost;
+          let address= data.addresses[0].line1 + data.addresses[0].city ;
+           return new Park(name,url,des,fee,address);
       })
-        res.send(parkArr);
-      });
+      
+        res.send(data);
+      })
+
+     .catch((error)=>{
+       res.status(500).send('something wrong');
+
+    })
     }
     app.listen(PORT, ()=>{
       console.log(`app is listening on port ${PORT}`);
     });
+    
