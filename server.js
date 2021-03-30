@@ -26,8 +26,8 @@ function getLocation(request, response){
   let city = request.query.city;
   let url = `https://us1.locationiq.com/v1/search.php?key=${locationKey}&q=${city}&format=json`;
   superAgent.get(url).then(res=>{
-  let data=res.body[0];
-  let locationObject = new Location(city,data.display_name,data.lat,data.lon);
+   let data=res.body[0];
+   let locationObject = new Location(city,data.display_name,data.lat,data.lon);
    lat=data.lat;
    lon=data.lon;
    response.send(locationObject);
@@ -54,9 +54,9 @@ function Location(search_query, formatted_query, latitude, longitude){
         weatherArray=[];
         let url=`http://api.weatherbit.io/v2.0/forecast/daily?lat=${lat}&lon=${lon}&key=${weatherKey}`
         superAgent.get(url).then(response=>{
-        let dataWeather=response.body;
-        dataWeather.data.map(element =>{
-        let newData = new weatherCnstructor(element.valid_date,element.weather.description);
+          let dataWeather=response.body;
+          dataWeather.data.map(element =>{
+          let newData = new weatherCnstructor(element.valid_date,element.weather.description);
         })
         res.send(weatherArray);
         })
@@ -105,3 +105,4 @@ function Location(search_query, formatted_query, latitude, longitude){
     app.listen(PORT, ()=>{
       console.log(`app is listening on port ${PORT}`);
     });
+    
