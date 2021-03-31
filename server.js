@@ -80,9 +80,9 @@ function getWeather(req, res) {
   weatherArray = [];
   let url = `http://api.weatherbit.io/v2.0/forecast/daily?lat=${lat}&lon=${lon}&key=${weatherKey}`
   superAgent.get(url).then(response => {
-    let dataWeather = response.body
+    let dataWeather = response.body;
     dataWeather.data.map(element => {
-     let newLocation = new weatherCnstructor(element.valid_date, element.weather.description);
+      return new weatherCnstructor(element.valid_date, element.weather.description);
     })
     res.send(weatherArray);
   })
@@ -119,6 +119,7 @@ function getPark(request, res) {
 
  
     function getMovies(request, response){
+      movieArr=[];
         let url = `http://api.themoviedb.org/3/movie/top_rated?api_key=${movieKey}&query=${request.query.city}`
         superAgent.get(url).then(res => {
             let movieData = res.body.results;
@@ -129,18 +130,18 @@ function getPark(request, res) {
             let count = element.vote_count;
             let pop= element.popularity;
             let relase = element.release_date;
-            let imgUrl= `https://image.tmdb.org/t/p/w500${image_url}`;
+            let imgUrl= 'https://image.tmdb.org/t/p/w500/' + element.poster_path
             let newMovie= new Movies(title,view,avarage,count,pop,relase,imgUrl);
         });
             
             response.send(movieArr)
-        }) .catch((error) => {
-          response.status(500).send('something wrong');
+        }).catch((error) => {
+          res.status(500).send('something wrong');
           })
         }
-      
     
-  
+    
+
 
 
   // function getYelp(request,response){
@@ -190,13 +191,6 @@ function getPark(request, res) {
       movieArr.push(this);
   
   }
-  
-  function Yelp(name ,image_url,price,rating,url) {
-    this.name = name;
-    this.image_url = image_url;
-    this.price = price;
-    this.rating =rating;
-    this.url =url;
-  }
+
 
 
