@@ -1,6 +1,4 @@
 'use strict';
-let lat;
-let lon;
 require('dotenv').config();
 const PORT = process.env.PORT ||3000;
 const express = require('express');
@@ -15,6 +13,8 @@ const movieKey=process.env.movie;
 const yelpKey=process.env.yelp;
 const DATABASE_URL = process.env.DATABASE_URL;
 
+let lat ='';
+let lon='';
 app.get('/location', getLocation);
 app.get('/weather', getWeather);
 app.get('/parks', getPark);
@@ -23,19 +23,12 @@ app.get('/yelp',getYelp);
 app.use('*', handleError);
 
 const pg = require('pg');
-const { response } = require('express');
+// const { response } = require('express');
 const client = new pg.Client(DATABASE_URL);
 client.on('error', err => {
   console.log('No Database are found')
 });
 
-client.connect().then(() => {
-  app.listen(PORT, () => {
-    console.log('app is listning on port' + PORT);
-  });
-}).catch(err => {
-  console.log('Sorry there is an error' + err);
-});
 
 
 
@@ -67,6 +60,8 @@ function getLocation(request, response) {
       })
       
     } else {
+      lat = data.rows[0].latitude;
+      lon = data.rows[0].longitude;
       response.send(data.rows[0]);
     }
   })
@@ -78,26 +73,25 @@ function getLocation(request, response) {
 // Weather server function:
 
 function getWeather(req, res) {
-  weatherArray = [];
-  let url = `http://api.weatherbit.io/v2.0/forecast/daily?lat=${lat}&lon=${lon}&key=${weatherKey}`
+   let url = `http://api.weatherbit.io/v2.0/forecast/daily?lat=${lat}&lon=${lon}&key=${weatherKey}`
   superAgent.get(url).then(response => {
     let dataWeather = response.body;
-    dataWeather.data.map(element => {
-      let newData = new weatherCnstructor(element.valid_date, element.weather.description);
+   let weatherNew= dataWeather.data.map(element => {
+      return new weatherCnstructor(element.valid_date, element.weather.description);
     })
-    res.send(weatherArray);
+    console.log(weatherNew)
+    res.send(weatherNew);
   })
-    .catch((error) => {
-      res.status(500).send('something wrong');
-
-    })
+  .catch((error) => {
+    res.status(500).send('something wrong');
+    
+  })
 }
 
 // start park function
 
 function getPark(request, res) {
   let url = `https://developer.nps.gov/api/v1/parks?api_key=${park_Key}&q=${request.query.search_query}`
-  console.log(url);
   superAgent.get(url).then(response => {
     const data = response.body.data.map(data => {
       
@@ -117,6 +111,11 @@ function getPark(request, res) {
 }
 
 
+
+  
+          
+          // ////////////////////////////////////
+
 function getMovies(request, response){
   movieArr=[];
   let url = `http://api.themoviedb.org/3/movie/top_rated?api_key=${movieKey}&query=${request.query.city}`
@@ -129,8 +128,8 @@ function getMovies(request, response){
       let count = element.vote_count;
       let pop= element.popularity;
       let relase = element.release_date;
-      let imgUrl= 'https://image.tmdb.org/t/p/w500/' + element.poster_path
-      let newMovie= new Movies(title,view,avarage,count,pop,relase,imgUrl);
+      let imgUrl=  'https://image.tmdb.org/t/p/w500'+element.poster_path
+      let newMovie= new Movies(title,view,count,avarage,imgUrl,pop,relase);
     });
     
     response.send(movieArr)
@@ -140,10 +139,12 @@ function getMovies(request, response){
 }
 
 
-
+let count = 0;
 function getYelp(request, response){
-    let url =`https://api.yelp.com/v3/businesses/search&latitude=${lat}&longitude=${lon}`;
-    superagent.get(url).set('Authorization', `Bearer ${yelpKey}`).then(res => {
+  yelpArr=[];
+  let city = request.query.city;
+    let url =`https://api.yelp.com/v3/businesses/search?location=${city}&limit=50`;
+    superAgent.get(url).set('Authorization',`Bearer ${yelpKey}`).then(res => {
         let yelpData = res.body.businesses;
           yelpData.map(element => {
               let name= element.name;
@@ -151,10 +152,16 @@ function getYelp(request, response){
               let price= element.price;
               let rating = element.rating;
               let url= element.url;
-              return new Yelp(name,img,price,rating,url);
-
+              return new Yelp(name,img,price,rating,url)
             });
-            response.send(yelpData);
+
+          let count2 =count+5;
+         let countArr = yelpArr.slice(count,count2)
+         count +=5 ;
+
+            response.send(countArr);
+          }).catch((error) => {
+            response.status(500).send('something wrong');
           })
         
         } 
@@ -173,11 +180,11 @@ function getYelp(request, response){
   // //////////////////////////////////////////////////////////////////////
   
   
-  let weatherArray = [];
+  // let weatherArray = [];
   function weatherCnstructor(forecast, time) {
     this.forecast = forecast;
       this.time = time;
-      weatherArray.push(this);
+      // weatherArray.push(this);
       
     }
     
@@ -191,6 +198,7 @@ function getYelp(request, response){
       this.address = address;
       
     }
+
     let movieArr =[];
     function Movies(title, overview, average_votes, total_votes, image_url, popularity, released_on) {
       this.title = title;
@@ -201,9 +209,8 @@ function getYelp(request, response){
       this.released_on =released_on;
       this.image_url = image_url;
       movieArr.push(this);
-      
+
     }
-    
     
     let yelpArr = [];
     function Yelp(name,image_url,price,rating,url){
@@ -214,4 +221,16 @@ function getYelp(request, response){
         this.url =url;
         yelpArr.push(this)
     }
+    
+
+    
+    client.connect().then(() => {
+      app.listen(PORT, () => {
+        console.log('app is listning on port' + PORT);
+      });
+    }).catch(err => {
+      console.log('Sorry there is an error' + err);
+    });
+
+
 
