@@ -2,7 +2,7 @@
 let lat;
 let lon;
 require('dotenv').config();
-const PORT = process.env.PORT;
+const PORT = process.env.PORT ||3000;
 const express = require('express');
 const cors = require('cors');
 const app = express();
@@ -19,10 +19,11 @@ app.get('/location', getLocation);
 app.get('/weather', getWeather);
 app.get('/parks', getPark);
 app.get('/movies',getMovies);
-// app.get('/yelp',getYelp);
+app.get('/yelp',getYelp);
 app.use('*', handleError);
 
 const pg = require('pg');
+const { response } = require('express');
 const client = new pg.Client(DATABASE_URL);
 client.on('error', err => {
   console.log('No Database are found')
@@ -140,12 +141,25 @@ function getMovies(request, response){
 
 
 
+function getYelp(request, response){
+    let url =`https://api.yelp.com/v3/businesses/search&latitude=${lat}&longitude=${lon}`;
+    superagent.get(url).set('Authorization', `Bearer ${yelpKey}`).then(res => {
+        let yelpData = res.body.businesses;
+          yelpData.map(element => {
+              let name= element.name;
+              let img = element.image_url;
+              let price= element.price;
+              let rating = element.rating;
+              let url= element.url;
+              return new Yelp(name,img,price,rating,url);
+
+            });
+            response.send(yelpData);
+          })
+        
+        } 
 
 
-// function getYelp(request,response){
-  
-  
-  // }
   // \\\\\\\\\\\\\\\\\\\\\\ THE CONSTRUCORS FOR FUNCTIONS \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
   
   
@@ -191,4 +205,13 @@ function getMovies(request, response){
     }
     
     
-  
+    let yelpArr = [];
+    function Yelp(name,image_url,price,rating,url){
+        this.name = name;
+        this.image_url = image_url;
+        this.price = price;
+        this.rating =rating;
+        this.url =url;
+        yelpArr.push(this)
+    }
+
