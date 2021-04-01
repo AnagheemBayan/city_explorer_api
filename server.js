@@ -82,7 +82,7 @@ function getWeather(req, res) {
   superAgent.get(url).then(response => {
     let dataWeather = response.body;
     dataWeather.data.map(element => {
-      return new weatherCnstructor(element.valid_date, element.weather.description);
+      let newData = new weatherCnstructor(element.valid_date, element.weather.description);
     })
     res.send(weatherArray);
   })
@@ -92,8 +92,6 @@ function getWeather(req, res) {
     })
 }
 
-
-
 // start park function
 
 function getPark(request, res) {
@@ -101,7 +99,7 @@ function getPark(request, res) {
   console.log(url);
   superAgent.get(url).then(response => {
     const data = response.body.data.map(data => {
-
+      
       let name = data.fullNam;
       let url = data.url;
       let des = data.description;
@@ -109,77 +107,77 @@ function getPark(request, res) {
       let address = data.addresses[0].line1 + data.addresses[0].city;
       return new Park(name, url, des, fee, address);
     })
-
+    
     res.send(data);
   })
-    .catch((error) => {
+  .catch((error) => {
     res.status(500).send('something wrong');
-    })
-  }
+  })
+}
 
- 
-    function getMovies(request, response){
-      movieArr=[];
-        let url = `http://api.themoviedb.org/3/movie/top_rated?api_key=${movieKey}&query=${request.query.city}`
-        superAgent.get(url).then(res => {
-            let movieData = res.body.results;
-            movieData.map(element => {   
-            let title= element.title;
-            let view = element.overview;
-            let avarage= element.vote_average;
-            let count = element.vote_count;
-            let pop= element.popularity;
-            let relase = element.release_date;
-            let imgUrl= 'https://image.tmdb.org/t/p/w500/' + element.poster_path
-            let newMovie= new Movies(title,view,avarage,count,pop,relase,imgUrl);
-        });
-            
-            response.send(movieArr)
-        }).catch((error) => {
-          res.status(500).send('something wrong');
-          })
-        }
+
+function getMovies(request, response){
+  movieArr=[];
+  let url = `http://api.themoviedb.org/3/movie/top_rated?api_key=${movieKey}&query=${request.query.city}`
+  superAgent.get(url).then(res => {
+    let movieData = res.body.results;
+    movieData.map(element => {   
+      let title= element.title;
+      let view = element.overview;
+      let avarage= element.vote_average;
+      let count = element.vote_count;
+      let pop= element.popularity;
+      let relase = element.release_date;
+      let imgUrl= 'https://image.tmdb.org/t/p/w500/' + element.poster_path
+      let newMovie= new Movies(title,view,avarage,count,pop,relase,imgUrl);
+    });
     
-    
+    response.send(movieArr)
+  }).catch((error) => {
+    res.status(500).send('something wrong');
+  })
+}
 
 
 
-  // function getYelp(request,response){
 
 
+// function getYelp(request,response){
+  
+  
   // }
   // \\\\\\\\\\\\\\\\\\\\\\ THE CONSTRUCORS FOR FUNCTIONS \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
-
-
-    function Location(search_query, formatted_query, latitude, longitude) {
-      this.search_query = search_query;
-      this.formatted_query = formatted_query;
-      this.latitude = latitude;
-      this.longitude = longitude;
-    }
-
-    // //////////////////////////////////////////////////////////////////////
-    
-    
-    let weatherArray = [];
-    function weatherCnstructor(forecast, time) {
-      this.forecast = forecast;
+  
+  
+  function Location(search_query, formatted_query, latitude, longitude) {
+    this.search_query = search_query;
+    this.formatted_query = formatted_query;
+    this.latitude = latitude;
+    this.longitude = longitude;
+  }
+  
+  // //////////////////////////////////////////////////////////////////////
+  
+  
+  let weatherArray = [];
+  function weatherCnstructor(forecast, time) {
+    this.forecast = forecast;
       this.time = time;
       weatherArray.push(this);
       
     }
     
     // /////////////////////////////////////
-
+    
     function Park(name, url, des, fee, address) {
       this.name = name;
       this.url = url;
       this.des = des;
       this.fee = fee;
       this.address = address;
-     
+      
     }
-   let movieArr =[];
+    let movieArr =[];
     function Movies(title, overview, average_votes, total_votes, image_url, popularity, released_on) {
       this.title = title;
       this.overview =overview ;
@@ -189,8 +187,8 @@ function getPark(request, res) {
       this.released_on =released_on;
       this.image_url = image_url;
       movieArr.push(this);
+      
+    }
+    
+    
   
-  }
-
-
-
