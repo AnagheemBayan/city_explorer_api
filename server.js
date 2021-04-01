@@ -1,6 +1,6 @@
 'use strict';
 require('dotenv').config();
-const PORT = process.env.PORT;
+const PORT = process.env.PORT ||3000;
 const express = require('express');
 const cors = require('cors');
 const app = express();
@@ -10,7 +10,7 @@ const locationKey = process.env.location;
 const weatherKey = process.env.weather;
 const park_Key = process.env.park;
 const movieKey=process.env.movie;
-// const yelpKey=process.env.yelp;
+const yelpKey=process.env.yelp;
 const DATABASE_URL = process.env.DATABASE_URL;
 
 let lat;
@@ -19,10 +19,11 @@ app.get('/location', getLocation);
 app.get('/weather', getWeather);
 app.get('/parks', getPark);
 app.get('/movies',getMovies);
-// app.get('/yelp',getYelp);
+app.get('/yelp',getYelp);
 app.use('*', handleError);
 
 const pg = require('pg');
+const { response } = require('express');
 const client = new pg.Client(DATABASE_URL);
 client.on('error', err => {
   console.log('No Database are found')
@@ -75,7 +76,7 @@ function getWeather(req, res) {
   superAgent.get(url).then(response => {
     let dataWeather = response.body;
     dataWeather.data.map(element => {
-      return new weatherCnstructor(element.valid_date, element.weather.description);
+      let newData = new weatherCnstructor(element.valid_date, element.weather.description);
     })
     res.send(weatherArray);
   })
@@ -84,8 +85,6 @@ function getWeather(req, res) {
     
   })
 }
-
-
 
 // start park function
 
@@ -132,39 +131,78 @@ function getMovies(request, response){
     res.status(500).send('something wrong');
           })
         }
+
+  
+          
+          // ////////////////////////////////////
+
+function getMovies(request, response){
+  movieArr=[];
+  let url = `http://api.themoviedb.org/3/movie/top_rated?api_key=${movieKey}&query=${request.query.city}`
+  superAgent.get(url).then(res => {
+    let movieData = res.body.results;
+    movieData.map(element => {   
+      let title= element.title;
+      let view = element.overview;
+      let avarage= element.vote_average;
+      let count = element.vote_count;
+      let pop= element.popularity;
+      let relase = element.release_date;
+      let imgUrl= 'https://image.tmdb.org/t/p/w500/' + element.poster_path
+      let newMovie= new Movies(title,view,avarage,count,pop,relase,imgUrl);
+    });
+    
+    response.send(movieArr)
+  }).catch((error) => {
+    res.status(500).send('something wrong');
+  })
+}
+
+
+
+function getYelp(request, response){
+    let url =`https://api.yelp.com/v3/businesses/search&latitude=${lat}&longitude=${lon}`;
+    superagent.get(url).set('Authorization', `Bearer ${yelpKey}`).then(res => {
+        let yelpData = res.body.businesses;
+          yelpData.map(element => {
+              let name= element.name;
+              let img = element.image_url;
+              let price= element.price;
+              let rating = element.rating;
+              let url= element.url;
+              return new Yelp(name,img,price,rating,url);
+
+            });
+            response.send(yelpData);
+          })
         
-        
-        
-        
-        
-        // function getYelp(request,response){
-          
-          
-          // }
-          // \\\\\\\\\\\\\\\\\\\\\\ THE CONSTRUCORS FOR FUNCTIONS \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
-          
-          
-          function Location(search_query, formatted_query, latitude, longitude) {
-            this.search_query = search_query;
-            this.formatted_query = formatted_query;
-            this.latitude = latitude;
-            this.longitude = longitude;
-          }
-          
-          // //////////////////////////////////////////////////////////////////////
-          
-          
-          let weatherArray = [];
-          function weatherCnstructor(forecast, time) {
-            this.forecast = forecast;
-            this.time = time;
-            weatherArray.push(this);
-            
-          }
-          
-          // /////////////////////////////////////
-          
-          function Park(name, url, des, fee, address) {
+        } 
+
+
+  // \\\\\\\\\\\\\\\\\\\\\\ THE CONSTRUCORS FOR FUNCTIONS \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+  
+  
+  function Location(search_query, formatted_query, latitude, longitude) {
+    this.search_query = search_query;
+    this.formatted_query = formatted_query;
+    this.latitude = latitude;
+    this.longitude = longitude;
+  }
+  
+  // //////////////////////////////////////////////////////////////////////
+  
+  
+  let weatherArray = [];
+  function weatherCnstructor(forecast, time) {
+    this.forecast = forecast;
+      this.time = time;
+      weatherArray.push(this);
+      
+    }
+    
+    // /////////////////////////////////////
+    
+    function Park(name, url, des, fee, address) {
       this.name = name;
       this.url = url;
       this.des = des;
@@ -172,6 +210,7 @@ function getMovies(request, response){
       this.address = address;
       
     }
+
     let movieArr =[];
     function Movies(title, overview, average_votes, total_votes, image_url, popularity, released_on) {
       this.title = title;
@@ -185,7 +224,17 @@ function getMovies(request, response){
       
     }
     
+    let yelpArr = [];
+    function Yelp(name,image_url,price,rating,url){
+        this.name = name;
+        this.image_url = image_url;
+        this.price = price;
+        this.rating =rating;
+        this.url =url;
+        yelpArr.push(this)
+    }
     
+
     
     client.connect().then(() => {
       app.listen(PORT, () => {
@@ -194,3 +243,6 @@ function getMovies(request, response){
     }).catch(err => {
       console.log('Sorry there is an error' + err);
     });
+
+
+
